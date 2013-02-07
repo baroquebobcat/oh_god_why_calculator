@@ -1,0 +1,49 @@
+%% name = OhGodWhy::CalculatorExpressionCompiler
+
+%% header {
+  require 'bitescript'
+}
+
+%% {
+  def initialize str
+    super
+    @builder = BiteScript::FileBuilder.build(__FILE__)
+    @class_name = new_class_name
+    @class_builder = @builder.public_class @class_name, @builder.object
+    @method = @class_builder.public_method("evaluate", [], Java::int)
+    @method.start
+  end
+
+  def new_class_name
+    "CalculatorExpression#{java.lang.System.nano_time + rand(java.lang.Long::MAX_VALUE)}"
+  end
+
+  def evaluate
+    successful = parse
+    return "fail!" unless successful
+    @method.ireturn
+    @method.stop
+    @class_builder.public_constructor([]) do
+      aload local 'this'
+      invokespecial object, '<init>', [void]
+      returnvoid
+    end
+    class_bytes = @class_builder.generate.to_java_bytes
+    JRuby.runtime.jruby_class_loader.define_class(@class_name, class_bytes).new_instance.evaluate
+  end
+}
+
+space = " "
+- = space*
+
+digits = /[1-9][0-9]*/
+
+integer = < digits > { @method.push_int text.to_i }
+
+term = term:t1 - "+" - term:t2 { @method.iadd }
+     | term:t1 - "-" - termLt2 { @method.isub }
+     | fact
+fact = fact:f1 - "*" - fact:f2 { @method.imul }
+     | fact:f1 - "/" - fact:f2 { @method.idiv }
+     | integer
+root = term
