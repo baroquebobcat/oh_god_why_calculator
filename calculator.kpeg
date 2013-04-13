@@ -41,7 +41,7 @@ digits = /[1-9][0-9]*/
 integer = < digits > { @method.push_int text.to_i }
 
 term = term:t1 - "+" - term:t2 { @method.iadd }
-     | term:t1 - "-" - termLt2 { @method.isub }
+     | term:t1 - "-" - term:t2 { @method.isub }
      | fact
 fact = fact:f1 - "*" - fact:f2 { @method.imul }
      | fact:f1 - "/" - fact:f2 { @method.idiv }
